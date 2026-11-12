@@ -13,8 +13,8 @@ ui_detect() {
   l=$(tput lines 2>/dev/null) || l=${LINES:-24}
   [[ $c =~ ^[0-9]+$ ]] || c=40; [[ $l =~ ^[0-9]+$ ]] || l=24
   UI_W=$(( c > 44 ? 44 : c )); (( UI_W < 20 )) && UI_W=20
-  if (( c >= 38 && l >= 36 )); then UI_MODE=full
-  elif (( c >= 34 && l >= 23 )); then UI_MODE=compact
+  if (( c >= 38 && l >= 48 )); then UI_MODE=full
+  elif (( c >= 34 && l >= 36 )); then UI_MODE=compact
   else UI_MODE=minimal; fi
   if [[ -n ${NO_COLOR:-} || ${TERM:-} == dumb ]]; then UI_COLOR=none
   elif [[ ${COLORTERM:-} == @(truecolor|24bit) ]]; then UI_COLOR=24
@@ -52,20 +52,50 @@ ui_row() {
   L "${DIM2}│${RST} $1${sp} ${DIM2}│"
 }
 ui_banner() {
-  local art=( '      ▄▄█████▄▄' '   ▄████▀▀ ▀▀████▄' '  ████▀  ▄▄▄  ▀████' ' ███▀  ▄██▀▀██▄  ▀███'
-    ' ██▀  ██▀ ▄▄ ▀██  ▀██' ' ██▄  ██▄ ▀▀ ▄██  ▄██' ' ███▄  ▀██▄▄██▀  ▄███' '  ████▄   ▀▀▀   ▄████'
-    '   ▀████▄▄  ▄▄████▀' '      ▀▀█████▀▀' )
-  local i pad sp
+  # ASCII do utilizador: a figura completa só aparece em terminais altos;
+  # versões reduzidas mantêm o menu utilizável em ecrãs menores.
+  local art=(
+    '                     ▄'
+    '       ▄ ▀▀▀▀▀▀██▄     █▄'
+    '                 ▀▀█▄   ▄▄'
+    '       ▄███▀▀██▄▄   ▀█   █▄'
+    '    ▄█▀▀        ▀█▄  ██  ▀█'
+    '   █▀   ▄▄█▀▀▀█▄  █▄  █   █   ▄'
+    '  ▄▀  ▄█▀   ▄▄▄▄█ █  ▄█  ▄█   █'
+    ' ▄█  ▄█   ▄▀  ████  ▄▀   █▀  ▄'
+    '     █▀  █▀  █ █▀▀▀▀   ▄█▀  ▄█'
+    '     █   █  ▀█  ▀█▄▄▄█▀▀   ▄█'
+    '     █▄  ██  ▀█▄        ▄▄█▀'
+    '     ▀█   █▄   ▀▀██▄▄███▀'
+    '       █   ▀▀'
+    '       ▀   █████████   █▀'
+    '         ▄▄██ ███ ██▄▄'
+    '         ▀▀█████████▀▀'
+    '           █▀█▀█▀█▀█'
+    '           █ █ █ █ █'
+  )
+  local small=(
+    '       ▄ ▀▀▀▀▀▀██▄     █▄'
+    '       ▄███▀▀██▄▄   ▀█   █▄'
+    '   █▀   ▄▄█▀▀▀█▄  █▄  █   █   ▄'
+    ' ▄█  ▄█   ▄▀  ████  ▄▀   █▀  ▄'
+    '     █▄  ██  ▀█▄        ▄▄█▀'
+    '     ▀█   █▄   ▀▀██▄▄███▀'
+    '       ▀   █████████   █▀'
+    '         ▀▀█████████▀▀'
+  )
+  local i pad sp width=37
   case $UI_MODE in
     full)
-      pad=$(( (UI_W - 22) / 2 )); (( pad < 0 )) && pad=0; printf -v sp '%*s' "$pad" ''
-      for i in "${!art[@]}"; do L "${sp}${GR[i]}${art[i]}"; done
-      L ''; printf -v sp '%*s' $(( (UI_W - 12) / 2 )) ''; L "${sp}${BONE}N T L ${DIM2}· v0.3"
+      pad=$(( (UI_W - width) / 2 )); (( pad < 0 )) && pad=0; printf -v sp '%*s' "$pad" ''
+      for i in "${!art[@]}"; do L "${sp}${GR[i%10]}${art[i]}"; done
+      L ''; printf -v sp '%*s' $(( (UI_W - 16) / 2 )) ''; L "${sp}${BONE}N Á U T I L O ${DIM2}· v0.5"
       printf -v sp '%*s' $(( (UI_W - 29) / 2 )) ''; L "${sp}${DIM}nemotron no abismo · 550B"; L '' ;;
     compact)
-      L " ${GR[2]}▄██▀▀██▄   ${BONE}N T L ${DIM2}· v0.3"; L " ${GR[3]}██ ▄▄ ██   ${DIM}nemotron no abismo"
-      L " ${GR[5]}▀██▄▄██▀   ${DIM2}550B · 1M ctx"; L '' ;;
-    *) L " ${A}◢◤ ${BONE}NTL ${DIM2}· 550B · 1M ctx" ;;
+      pad=$(( (UI_W - width) / 2 )); (( pad < 0 )) && pad=0; printf -v sp '%*s' "$pad" ''
+      for i in "${!small[@]}"; do L "${sp}${GR[i%10]}${small[i]}"; done
+      L " ${A2}NÁUTILO ${DIM2}· ${DIM}nemotron no abismo"; L '' ;;
+    *) L " ${A}◢◤ ${BONE}NÁUTILO ${DIM2}· 550B · 1M ctx" ;;
   esac
 }
 ui_quota_bar() {
