@@ -13,7 +13,27 @@ jq -e '.primary and (.fallback|type == "array")' "$BASE/models.json" >/dev/null
 [ "$(stat -c %a "$BASE/secrets")" = 700 ]
 [ -f "$BASE/config/config.env" ] && [ "$(stat -c %a "$BASE/config/config.env")" = 600 ]
 [ -L "$HOME/bin/ntl" ]
-. "$BASE/lib/config.sh"; . "$BASE/lib/session.sh"; . "$BASE/lib/api.sh"
+[ -d "$BASE/imports" ] && [ "$(stat -c %a "$BASE/imports")" = 700 ]
+. "$BASE/lib/config.sh"; . "$BASE/lib/session.sh"; . "$BASE/lib/api.sh"; . "$BASE/lib/files.sh"; . "$BASE/lib/ui.sh"
+# Importa código local e APK como cópias apenas; não inicia instalação nem execução.
+mkdir -p "$T/source" "$HOME/storage/shared" "$HOME/storage/downloads"
+printf 'print(42)\n' > "$T/source/demo.py"
+printf 'fake-apk-bytes\000\377' > "$T/source/demo.apk"
+printf 'not a supported file' > "$T/source/demo.exe"
+FILE_MAX_TEXT_BYTES=64
+# Importação interactiva exercitada com entrada predefinida.
+files_import <<<"$T/source/demo.py" >/dev/null
+files_import <<<"$T/source/demo.apk" >/dev/null
+if files_import <<<"$T/source/demo.exe" >/dev/null 2>&1; then echo 'Extensão não permitida foi aceite' >&2; exit 1; fi
+imp_py=$(find "$BASE/imports" -name '*.py' -type f); imp_apk=$(find "$BASE/imports" -name '*.apk' -type f)
+cmp "$T/source/demo.py" "$imp_py"; cmp "$T/source/demo.apk" "$imp_apk"
+# Exporta um APK para Downloads sem lhe alterar bytes nem instalá-lo.
+printf '[]\\n' > "$BASE/state/empty-history.json"
+files_select_import() { FILE_SELECTED="$imp_apk"; }
+files_export <<<'1' >/dev/null
+cmp "$T/source/demo.apk" "$HOME/storage/downloads/Nautilo/$(basename "$imp_apk")"
+ui_items; [ "${UI_ITEMS[10]%%|*}" = p ] && [ "${UI_ITEMS[11]%%|*}" = f ]
+. "$BASE/lib/config.sh"; . "$BASE/lib/session.sh"; . "$BASE/lib/api.sh"; . "$BASE/lib/files.sh"; . "$BASE/lib/ui.sh"
 mkdir -p "$BASE/secrets"; printf 'fake-test-key' > "$KEY_FILE"
 [ "$(quota_used)" = 0 ]; quota_inc; [ "$(quota_used)" = 1 ]
 id=$(new_session); file="$BASE/sessions/$id.json"
@@ -27,6 +47,12 @@ if [ "${TEST_MODE:-ok}" = fail ]; then echo 'data: {"error":{"message":"limite"}
 printf '%s\n' 'data: {"choices":[{"delta":{"content":"Olá\n"}}]}' 'data: {"choices":[{"delta":{"content":"mundo"}}]}' 'data: [DONE]'
 MOCK
 chmod +x "$T/mock/curl"
+# APK reject path must occur before confirmation and never reaches chat_stream.
+files_select_import() { FILE_SELECTED="$imp_apk"; }
+declare -f chat_stream > "$T/chat_stream.original"
+chat_stream() { echo 'APK unexpectedly sent to model' >&2; return 99; }
+if files_send_text '' </dev/null >/dev/null 2>&1; then echo 'APK aceito para envio ao modelo' >&2; exit 1; fi
+unset -f chat_stream; . "$T/chat_stream.original"
 chat_stream '' 'Como estás?' "$file" >/dev/null
 printf 'Olá\nmundo' > "$T/expected"; cmp "$T/expected" "$LAST_RESPONSE_FILE"
 export TEST_MODE=fail
