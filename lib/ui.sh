@@ -93,7 +93,7 @@ ui_status() {
 ui_items() {
   UI_ITEMS=( "1|chat rápido|stream" "2|sessão|nova/retomar" "3|preset|system prompt"
     "4|reasoning|$REASONING" "5|parâmetros|temp/tokens" "6|modelo|${MODEL%%:*}"
-    "7|sessões|exportar" "8|quota|$USED/$QUOTA_LIMIT" "9|diagnóstico|verificar" "a|chave|OpenRouter" "0|sair|" )
+    "7|sessões|exportar" "8|quota|$USED/$QUOTA_LIMIT" "9|diagnóstico|verificar" "a|chave|OpenRouter" "p|programação|criar/rever apps" "f|ficheiros|importar/exportar" "0|sair|" )
 }
 ui_menu() {
   local sel=$1 i it key r lab hint cell plen tail sp bl='' br=''
@@ -137,6 +137,7 @@ ui_pick() {
     esac
   done
 }
+confirm() { local a; read -rp "$1 [s/N] " a; [[ "${a,,}" == s* ]]; }
 ui_start() { ui_detect; trap ui_detect WINCH; trap 'ui_stop; exit 130' INT TERM; trap ui_stop EXIT; printf '%s' "${ESC}[?1049h${ESC}[?25l"; UI_ON=1; }
 ui_stop() { [[ ${UI_ON:-0} == 1 ]] || return 0; UI_ON=0; printf '%s' "${ESC}[?25h${ESC}[?1049l${RST}"; }
 # Executa uma função no ecrã normal, aguardando Enter antes de voltar ao menu.

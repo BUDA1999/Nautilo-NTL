@@ -15,3 +15,11 @@ export_session() {
   jq -r '.[] | "## \(.role)\n\n\(.content)\n"' "$f" > "$out"
   printf '%s\n' "$out"
 }
+save_answer() {
+  local file="$1" label="${2:-resposta}" out
+  [ -s "$file" ] || { echo 'Não há resposta para guardar.'; return 1; }
+  mkdir -p "$BASE/exports"; chmod 700 "$BASE/exports"
+  out="$BASE/exports/${label}-$(date +%Y%m%d-%H%M%S)-$$.md"
+  { printf '# NÁUTILO — %s\n\n' "$label"; cat "$file"; printf '\n'; } > "$out"
+  chmod 600 "$out"; echo "Resposta guardada localmente: $out"
+}
