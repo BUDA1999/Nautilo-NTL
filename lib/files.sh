@@ -17,7 +17,7 @@ files_import() {
   local src name dest ext bytes
   read -rp 'Caminho completo do ficheiro no armazenamento do Termux: ' src
   [ -n "$src" ] || return 0
-  [[ "$src" == '~/'* ]] && src="$HOME/${src#~/}"
+  [[ "$src" == '~/'* ]] && src="$HOME/${src:2}"
   if [ -L "$src" ] || [ ! -f "$src" ]; then echo 'Caminho inválido: seleciona um ficheiro regular, não um atalho.'; return 1; fi
   name=${src##*/}; ext=${name##*.}; ext=${ext,,}
   if [ "$ext" != apk ] && ! text_extension_ok "$name"; then
