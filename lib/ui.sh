@@ -78,7 +78,8 @@ ui_quota_bar() {
   REPLY=$out
 }
 ui_status() {
-  local cnt="${USED}/${QUOTA_LIMIT}" bw
+  local cnt bw
+  if [[ ! ${QUOTA_LIMIT:-0} =~ ^[0-9]+$ ]] || [ "$QUOTA_LIMIT" -le 0 ]; then cnt="${USED}/∞ local"; else cnt="${USED}/${QUOTA_LIMIT}"; fi
   if [[ $UI_MODE == minimal ]]; then
     L " ${A2}${MODEL:0:18} ${DIM2}· ${A}${REASONING} ${DIM2}· fb ${FALLBACK_N}"
     bw=$(( UI_W - 3 - ${#cnt} )); ui_quota_bar "$bw"; L " ${REPLY} ${DIM}${cnt}"; return

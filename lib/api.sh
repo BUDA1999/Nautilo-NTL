@@ -4,7 +4,9 @@ chat_stream() {
   local sys="$1" user="$2" hist="$3" body rc response done_file fragment curl_cfg
   LAST_RESPONSE_FILE=''
   need_key || return 1
-  [ "$(quota_left)" -gt 0 ] || { echo "Quota local esgotada hoje ($(quota_used)/$QUOTA_LIMIT)."; return 1; }
+  if [[ ${QUOTA_LIMIT:-0} =~ ^[0-9]+$ ]] && [ "$QUOTA_LIMIT" -gt 0 ] && [ "$(quota_left)" -le 0 ]; then
+    echo "Trava local esgotada hoje ($(quota_used)/$QUOTA_LIMIT). O servidor OpenRouter ainda pode impor os seus próprios limites."; return 1
+  fi
   jq -e 'type == "array"' "$hist" >/dev/null 2>&1 || { echo "Histórico inválido."; return 1; }
   body=$(jq -n --arg m "$MODEL" --arg s "$sys" --arg u "$user" \
     --argjson t "$TEMPERATURE" --argjson p "$TOP_P" --argjson mt "$MAX_TOKENS" \

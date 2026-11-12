@@ -20,5 +20,8 @@ save_cfg() {
 }
 quota_file() { printf '%s/state/quota-%s\n' "$BASE" "$(date +%F)"; }
 quota_used() { local f; f=$(quota_file); cat "$f" 2>/dev/null || printf '0'; }
-quota_left() { echo $(( QUOTA_LIMIT - $(quota_used) )); }
+quota_left() {
+  # Zero/negativo significa sem trava local; o servidor continua a impor a sua quota.
+  if [[ ! ${QUOTA_LIMIT:-0} =~ ^[0-9]+$ ]] || [ "$QUOTA_LIMIT" -le 0 ]; then echo 2147483647; else echo $(( QUOTA_LIMIT - $(quota_used) )); fi
+}
 quota_inc() { local f n; f=$(quota_file); n=$(quota_used); printf '%s\n' "$((n + 1))" > "$f"; }
