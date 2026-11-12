@@ -77,10 +77,12 @@ grep -q '█▀█▀█▀█▀█' "$T/menu.txt"
 grep -q 'reasoning' "$T/menu.txt"
 grep -q 'sessão' "$T/menu.txt"
 # Menus compact/minimal carregam e respondem também à tecla q.
-TERM=xterm COLUMNS=36 LINES=36 bash "$BASE/ntl" <<<'q' > "$T/compact.txt"
+TERM=xterm COLUMNS=36 LINES=24 bash "$BASE/ntl" <<<'q' > "$T/compact.txt"
+grep -q 'NÁUTILO' "$T/compact.txt"
 grep -q '▄███▀▀██▄▄' "$T/compact.txt"
 TERM=dumb COLUMNS=28 LINES=20 bash "$BASE/ntl" <<<'q' > "$T/minimal.txt"
-grep -q '550B' "$T/minimal.txt"
+grep -q 'NÁUTILO' "$T/minimal.txt"
+grep -q '████▀' "$T/minimal.txt"
 # Testa o fluxo real num pseudo-terminal, se Python estiver disponível.
 if command -v python3 >/dev/null 2>&1; then
   python3 "$BASE/tests/test_pty.py" "$BASE"
