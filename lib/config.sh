@@ -6,7 +6,7 @@ KEY_FILE="$BASE/secrets/key"
 # shellcheck source=/dev/null
 . "$CFG"
 need_key() {
-  [ -s "$KEY_FILE" ] || { echo "Sem chave da API. Usa a opção 10 no menu."; return 1; }
+  [ -s "$KEY_FILE" ] || { echo "Sem chave da API. Usa a opção a no menu."; return 1; }
   chmod 600 "$KEY_FILE"
 }
 save_cfg() {
