@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+- Menu abissal com banner, barra de quota e desenho adaptável ao terminal.
+- Navegação por setas, j/k, Enter e teclas de atalho; opção `a` para a chave.
+- Menu ligado às funções reais e testes dos três tamanhos em Linux.
+- Teste no dispositivo e com chave real ainda pendente.
+
 ## 0.2.0
 - Instalação Termux com dependências, permissões privadas e atalho `ntl` em `~/bin`.
 - Retoma de sessões, e conversas gravadas apenas depois de resposta concluída.

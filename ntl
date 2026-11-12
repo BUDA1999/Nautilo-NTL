@@ -7,102 +7,106 @@ load_system() {
   SYS=''
   if [ -n "${SYSTEM_PROMPT_FILE:-}" ] && [ -f "$BASE/prompts/$SYSTEM_PROMPT_FILE" ]; then SYS=$(cat "$BASE/prompts/$SYSTEM_PROMPT_FILE"); fi
 }
-ask_once() {
-  local u="$1" hist="$2"
-  chat_stream "${SYS:-}" "$u" "$hist" || return 1
+quick_chat() {
+  local u
+  read -rp 'msg: ' u; [ -n "$u" ] || return 0
+  load_system; printf '[]\n' > "$BASE/state/empty-history.json"
+  if chat_stream "${SYS:-}" "$u" "$BASE/state/empty-history.json"; then :; fi
+  [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
 }
-while true; do
-  header
-  cat <<'MENU'
-  1) chat rápido
-  2) chat em sessão (nova / retomar)
-  3) preset de system prompt
-  4) modo reasoning
-  5) parâmetros (temperatura / tokens)
-  6) modelo
-  7) sessões (listar / exportar)
-  8) quota e uso
-  9) diagnóstico
- 10) chave da API
-  0) sair
-MENU
-  hr; read -rp '> ' op || exit 0
-  case "$op" in
-    1)
-      read -rp 'msg: ' u
-      [ -n "$u" ] || continue
-      load_system
-      : > "$BASE/state/empty-history.json"
-      printf '[]\n' > "$BASE/state/empty-history.json"
-      if ask_once "$u" "$BASE/state/empty-history.json"; then :; fi
-      [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
-      read -rp 'enter para continuar' _ ;;
-    2)
-      mapfile -t sessions < <(list_sessions)
-      echo '1) Nova sessão   2) Retomar sessão'
-      read -rp '> ' choice
-      if [ "$choice" = 2 ] && [ "${#sessions[@]}" -gt 0 ]; then
-        select selected in "${sessions[@]}"; do [ -n "${selected:-}" ] && break; done
-        hist="$BASE/sessions/$selected"; id="${selected%.json}"
-      elif [ "$choice" = 1 ]; then
-        id=$(new_session); hist="$BASE/sessions/$id.json"
-      else echo 'Nenhuma sessão disponível ou opção inválida.'; read -r _; continue; fi
-      load_system
-      echo "Sessão $id. Linha vazia termina."
-      while true; do
-        read -rp "($id) msg: " u || break
-        [ -n "$u" ] || break
-        if chat_stream "${SYS:-}" "$u" "$hist"; then
-          append_msg "$hist" user "$u"
-          [ -s "$LAST_RESPONSE_FILE" ] && append_msg "$hist" assistant "$(cat "$LAST_RESPONSE_FILE")"
-        fi
-        [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
-      done
-      read -rp 'enter para continuar' _ ;;
-    3)
-      mapfile -t prompts < <(find "$BASE/prompts" -maxdepth 1 -type f -name '*.md' -printf '%f\n' | sort)
-      if [ "${#prompts[@]}" -gt 0 ]; then
-        select f in "${prompts[@]}" 'sem preset'; do
-          if [ "$f" = 'sem preset' ]; then save_cfg SYSTEM_PROMPT_FILE ''; SYSTEM_PROMPT_FILE=''; break; fi
-          [ -n "${f:-}" ] || continue
-          save_cfg SYSTEM_PROMPT_FILE "$f"; SYSTEM_PROMPT_FILE="$f"; echo "Preset selecionado: $f"; break
-        done
-      else echo 'Não há presets.'; read -r _; fi ;;
-    4)
-      select r in off low medium high budget; do
-        [ -n "${r:-}" ] || continue
-        save_cfg REASONING "$r"; REASONING="$r"; break
-      done ;;
-    5)
-      read -rp "temperature [$TEMPERATURE]: " t; t=${t:-$TEMPERATURE}
-      if [[ "$t" =~ ^[0-9]+([.][0-9]+)?$ ]]; then save_cfg TEMPERATURE "$t"; TEMPERATURE="$t"; else echo 'Valor numérico inválido.'; fi
-      read -rp "max_tokens [$MAX_TOKENS]: " m; m=${m:-$MAX_TOKENS}
-      if [[ "$m" =~ ^[0-9]+$ ]] && [ "$m" -gt 0 ]; then save_cfg MAX_TOKENS "$m"; MAX_TOKENS="$m"; else echo 'Número inválido.'; fi ;;
-    6)
-      jq -r '.primary, .fallback[]' "$BASE/models.json" | nl -w2 -s') '
-      read -rp 'número do modelo: ' n
-      if [[ "$n" =~ ^[1-9][0-9]*$ ]] && [ "$n" -le $(( $(jq '.fallback | length' "$BASE/models.json") + 1 )) ]; then
-        m=$(jq -r '. as $x | [$x.primary] + $x.fallback | .['"$((n-1))"']' "$BASE/models.json")
-        save_cfg MODEL "$m"; MODEL="$m"
-      else echo 'Seleção inválida.'; fi ;;
-    7)
-      mapfile -t sessions < <(list_sessions)
-      if [ "${#sessions[@]}" -eq 0 ]; then echo 'Ainda não há sessões.'; read -r _; continue; fi
-      select id in "${sessions[@]}"; do
-        [ -n "${id:-}" ] || continue
-        out=$(export_session "$id") && echo "Exportada: $out"
-        read -rp 'enter para continuar' _; break
-      done ;;
-    8) echo "Usadas hoje: $(quota_used)/$QUOTA_LIMIT"; read -rp 'enter para continuar' _ ;;
-    9)
-      echo "Dependências:"; for c in bash curl jq; do command -v "$c" || true; done
-      if need_key; then echo "Chave presente. Testa o acesso enviando uma pergunta no chat."; fi
-      read -rp 'enter para continuar' _ ;;
-    10)
-      read -rsp 'cola a key OpenRouter: ' k; echo
-      [ -n "$k" ] && { (umask 077; printf '%s' "$k" > "$KEY_FILE"); chmod 600 "$KEY_FILE"; echo 'Chave guardada com permissões privadas.'; }
-      unset k; read -rp 'enter para continuar' _ ;;
-    0) exit 0 ;;
-    *) echo 'Opção inválida.'; sleep 1 ;;
+session_chat() {
+  local id hist u choice selected
+  mapfile -t sessions < <(list_sessions)
+  echo '1) Nova sessão'
+  if [ "${#sessions[@]}" -gt 0 ]; then echo '2) Retomar sessão'; fi
+  read -rp '> ' choice
+  if [ "$choice" = 2 ] && [ "${#sessions[@]}" -gt 0 ]; then
+    select selected in "${sessions[@]}"; do [ -n "${selected:-}" ] && break; done
+    hist="$BASE/sessions/$selected"; id="${selected%.json}"
+  elif [ "$choice" = 1 ]; then
+    id=$(new_session); hist="$BASE/sessions/$id.json"
+  else echo 'Opção inválida.'; return 1; fi
+  load_system; echo "Sessão $id. Envia uma linha vazia para voltar ao menu."
+  while true; do
+    read -rp "($id) msg: " u || break
+    [ -n "$u" ] || break
+    if chat_stream "${SYS:-}" "$u" "$hist"; then
+      append_msg "$hist" user "$u"
+      [ -s "$LAST_RESPONSE_FILE" ] && append_msg "$hist" assistant "$(cat "$LAST_RESPONSE_FILE")"
+    fi
+    [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
+  done
+}
+choose_prompt() {
+  mapfile -t prompts < <(find "$BASE/prompts" -maxdepth 1 -type f -name '*.md' -printf '%f\n' | sort)
+  if [ "${#prompts[@]}" -eq 0 ]; then echo 'Não há presets.'; return; fi
+  echo 'Escolhe um preset (ou a opção final para limpar):'
+  select f in "${prompts[@]}" 'sem preset'; do
+    if [ "$f" = 'sem preset' ]; then save_cfg SYSTEM_PROMPT_FILE ''; SYSTEM_PROMPT_FILE=''; break; fi
+    [ -n "${f:-}" ] || continue
+    save_cfg SYSTEM_PROMPT_FILE "$f"; SYSTEM_PROMPT_FILE="$f"; echo "Preset selecionado: $f"; break
+  done
+}
+choose_reasoning() {
+  select r in off low medium high budget; do
+    [ -n "${r:-}" ] || continue
+    save_cfg REASONING "$r"; REASONING="$r"; echo "Reasoning: $r"; break
+  done
+}
+change_parameters() {
+  local t m
+  read -rp "temperature [$TEMPERATURE]: " t; t=${t:-$TEMPERATURE}
+  if [[ "$t" =~ ^[0-9]+([.][0-9]+)?$ ]] && awk -v x="$t" 'BEGIN{exit !(x>=0 && x<=2)}'; then save_cfg TEMPERATURE "$t"; TEMPERATURE="$t"; else echo 'Valor inválido (usa 0–2).'; fi
+  read -rp "max_tokens [$MAX_TOKENS]: " m; m=${m:-$MAX_TOKENS}
+  if [[ "$m" =~ ^[0-9]+$ ]] && [ "$m" -gt 0 ]; then save_cfg MAX_TOKENS "$m"; MAX_TOKENS="$m"; else echo 'Número inválido.'; fi
+}
+choose_model() {
+  local n m count
+  jq -r '.primary, .fallback[]' "$BASE/models.json" | nl -w2 -s') '
+  count=$(( $(jq '.fallback | length' "$BASE/models.json") + 1 ))
+  read -rp 'número do modelo: ' n
+  if [[ "$n" =~ ^[1-9][0-9]*$ ]] && [ "$n" -le "$count" ]; then
+    m=$(jq -r '. as $x | [$x.primary] + $x.fallback | .['"$((n-1))"']' "$BASE/models.json")
+    save_cfg MODEL "$m"; MODEL="$m"
+  else echo 'Seleção inválida.'; fi
+}
+manage_sessions() {
+  local id out
+  mapfile -t sessions < <(list_sessions)
+  if [ "${#sessions[@]}" -eq 0 ]; then echo 'Ainda não há sessões.'; return; fi
+  select id in "${sessions[@]}"; do
+    [ -n "${id:-}" ] || continue
+    out=$(export_session "$id") && echo "Exportada: $out"; break
+  done
+}
+show_diagnostics() {
+  echo 'Dependências:'
+  for c in bash curl jq; do if command -v "$c" >/dev/null; then printf '  %-6s %s\n' "$c" "$(command -v "$c")"; else echo "  $c: em falta"; fi; done
+  if [ -s "$KEY_FILE" ]; then echo 'Chave OpenRouter: guardada'; else echo 'Chave OpenRouter: ainda não configurada'; fi
+  echo "Modelo configurado: $MODEL"
+  echo 'Teste de rede/API: faz uma pergunta curta no chat.'
+}
+set_api_key() {
+  local k
+  read -rsp 'cola a key OpenRouter: ' k; echo
+  if [ -n "$k" ]; then (umask 077; printf '%s' "$k" > "$KEY_FILE"); chmod 600 "$KEY_FILE"; echo 'Chave guardada com permissões privadas.'; fi
+  unset k
+}
+run_choice() {
+  case "$1" in
+    1) quick_chat;; 2) session_chat;; 3) choose_prompt;; 4) choose_reasoning;;
+    5) change_parameters;; 6) choose_model;; 7) manage_sessions;;
+    8) echo "Pedidos locais usados hoje: $(quota_used)/$QUOTA_LIMIT";;
+    9) show_diagnostics;; a) set_api_key;;
+  esac
+}
+ui_start
+while :; do
+  USED=$(quota_used)
+  if ! ui_pick; then break; fi
+  case "$CHOICE" in
+    0) break;;
+    *) ui_run run_choice "$CHOICE" ;;
   esac
 done
+ui_stop
