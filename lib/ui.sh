@@ -14,7 +14,7 @@ ui_detect() {
   [[ $c =~ ^[0-9]+$ ]] || c=40; [[ $l =~ ^[0-9]+$ ]] || l=24
   UI_W=$(( c > 44 ? 44 : c )); (( UI_W < 20 )) && UI_W=20
   if (( c >= 38 && l >= 48 )); then UI_MODE=full
-  elif (( c >= 34 && l >= 36 )); then UI_MODE=compact
+  elif (( c >= 34 && l >= 23 )); then UI_MODE=compact
   else UI_MODE=minimal; fi
   if [[ -n ${NO_COLOR:-} || ${TERM:-} == dumb ]]; then UI_COLOR=none
   elif [[ ${COLORTERM:-} == @(truecolor|24bit) ]]; then UI_COLOR=24
@@ -84,6 +84,21 @@ ui_banner() {
     '       ▀   █████████   █▀'
     '         ▀▀█████████▀▀'
   )
+  local tiny=(
+    '       ▄ ▀▀▀▀▀▀██▄'
+    '     ▄███▀▀██▄▄ ▀█'
+    '   ▄█▀  ▄▄▄▄█  █▄'
+    '  █▀ ▄▀  ████ ▄█'
+    '   █▄ ██ ▀█▄ ▄█▀'
+    '    ▀█▄▀███▀'
+    '     ▀████▀'
+  )
+  local short=(
+    '    ▄▀▀▀▀██▄'
+    '   █ ▄▄▄▄ ▀█'
+    '   █▄▀███▄ █'
+    '    ▀████▀'
+  )
   local i pad sp width=37
   case $UI_MODE in
     full)
@@ -93,9 +108,15 @@ ui_banner() {
       printf -v sp '%*s' $(( (UI_W - 29) / 2 )) ''; L "${sp}${DIM}nemotron no abismo · 550B"; L '' ;;
     compact)
       pad=$(( (UI_W - width) / 2 )); (( pad < 0 )) && pad=0; printf -v sp '%*s' "$pad" ''
-      for i in "${!small[@]}"; do L "${sp}${GR[i%10]}${small[i]}"; done
+      if (( UI_W >= 40 )); then
+        for i in "${!small[@]}"; do L "${sp}${GR[i%10]}${small[i]}"; done
+      else
+        for i in "${!tiny[@]}"; do L "${GR[i%10]}${tiny[i]}"; done
+      fi
       L " ${A2}NÁUTILO ${DIM2}· ${DIM}nemotron no abismo"; L '' ;;
-    *) L " ${A}◢◤ ${BONE}NÁUTILO ${DIM2}· 550B · 1M ctx" ;;
+    *)
+      for i in "${!short[@]}"; do L " ${GR[i%10]}${short[i]}"; done
+      L " ${A2}NÁUTILO ${DIM2}· ${MODEL##*/}" ;;
   esac
 }
 ui_quota_bar() {
