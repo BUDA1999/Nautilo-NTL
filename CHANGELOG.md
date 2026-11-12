@@ -1,5 +1,9 @@
 # Changelog
 
+## Interface — arte do NÁUTILO
+- Incluída a arte ASCII enviada no menu, com versões adaptadas ao tamanho do terminal.
+- Mantidas opções e atalhos; testes de renderização em Linux.
+
 ## 0.4.0
 - Modo Programação (`p`) com prompt dedicado e histórico em sessão.
 - Respostas do chat e modo programação podem ser guardadas localmente para exportar.

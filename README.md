@@ -2,6 +2,8 @@
 
 ![Logótipo do NÁUTILO](assets/nautilo-logo.png)
 
+O menu usa arte ASCII em estilo submarino, com versões completa, compacta e mínima conforme o espaço disponível.
+
 Cliente para Termux que conversa com modelos remotos através do OpenRouter. O modelo não corre no telemóvel: é necessário acesso à internet e uma chave OpenRouter.
 
 ## Instalar no Termux
