@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+- Modo Programação (`p`) com prompt dedicado e histórico em sessão.
+- Respostas do chat e modo programação podem ser guardadas localmente para exportar.
+- Gestão local de ficheiros: importar texto/código ou APK; exportar para Downloads/Nautilo.
+- Enviar texto ao modelo é uma ação separada com confirmação; APK nunca é enviado nem instalado.
+- Testes simulados de importação/exportação adicionados.
+
 ## 0.3.0
 - Menu abissal com banner, barra de quota e desenho adaptável ao terminal.
 - Navegação por setas, j/k, Enter e teclas de atalho; opção `a` para a chave.

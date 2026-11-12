@@ -2,7 +2,7 @@
 set -uo pipefail
 BASE="$HOME/ntl"
 cd "$BASE" || { echo "Pasta não encontrada: $BASE. Executa install.sh primeiro."; exit 1; }
-for f in config ui session api; do . "$BASE/lib/$f.sh"; done
+for f in config ui session api files; do . "$BASE/lib/$f.sh"; done
 load_system() {
   SYS=''
   if [ -n "${SYSTEM_PROMPT_FILE:-}" ] && [ -f "$BASE/prompts/$SYSTEM_PROMPT_FILE" ]; then SYS=$(cat "$BASE/prompts/$SYSTEM_PROMPT_FILE"); fi
@@ -11,7 +11,7 @@ quick_chat() {
   local u
   read -rp 'msg: ' u; [ -n "$u" ] || return 0
   load_system; printf '[]\n' > "$BASE/state/empty-history.json"
-  if chat_stream "${SYS:-}" "$u" "$BASE/state/empty-history.json"; then :; fi
+  if chat_stream "${SYS:-}" "$u" "$BASE/state/empty-history.json"; then save_answer "$LAST_RESPONSE_FILE" 'resposta'; fi
   [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
 }
 session_chat() {
@@ -32,7 +32,7 @@ session_chat() {
     [ -n "$u" ] || break
     if chat_stream "${SYS:-}" "$u" "$hist"; then
       append_msg "$hist" user "$u"
-      [ -s "$LAST_RESPONSE_FILE" ] && append_msg "$hist" assistant "$(cat "$LAST_RESPONSE_FILE")"
+      [ -s "$LAST_RESPONSE_FILE" ] && append_msg "$hist" assistant "$(cat "$LAST_RESPONSE_FILE")" && save_answer "$LAST_RESPONSE_FILE" 'resposta'
     fi
     [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
   done
@@ -92,12 +92,31 @@ set_api_key() {
   if [ -n "$k" ]; then (umask 077; printf '%s' "$k" > "$KEY_FILE"); chmod 600 "$KEY_FILE"; echo 'Chave guardada com permissões privadas.'; fi
   unset k
 }
+programming_mode() {
+  local id hist u prompt="$BASE/prompts/programacao.md"
+  [ -f "$prompt" ] || { echo 'Preset de programação não encontrado.'; return 1; }
+  SYS=$(cat "$prompt"); id=$(new_session); hist="$BASE/sessions/$id.json"
+  echo "Modo programação · sessão $id. Envia uma linha vazia para voltar ao menu."
+  echo 'Descreve o app ou ficheiro; respostas completas serão guardadas em exports/.'
+  while true; do
+    read -rp 'programação> ' u || break
+    [ -n "$u" ] || break
+    if chat_stream "$SYS" "$u" "$hist"; then
+      append_msg "$hist" user "$u"
+      if [ -s "$LAST_RESPONSE_FILE" ]; then
+        append_msg "$hist" assistant "$(cat "$LAST_RESPONSE_FILE")"
+        save_answer "$LAST_RESPONSE_FILE" 'programacao'
+      fi
+    fi
+    [ -z "${LAST_RESPONSE_FILE:-}" ] || rm -f "$LAST_RESPONSE_FILE"
+  done
+}
 run_choice() {
   case "$1" in
     1) quick_chat;; 2) session_chat;; 3) choose_prompt;; 4) choose_reasoning;;
     5) change_parameters;; 6) choose_model;; 7) manage_sessions;;
     8) echo "Pedidos locais usados hoje: $(quota_used)/$QUOTA_LIMIT";;
-    9) show_diagnostics;; a) set_api_key;;
+    9) show_diagnostics;; a) set_api_key;; p) programming_mode;; f) files_menu;;
   esac
 }
 ui_start

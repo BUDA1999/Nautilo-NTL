@@ -11,8 +11,8 @@ fi
 if command -v pkg >/dev/null 2>&1; then pkg install -y curl jq; fi
 for cmd in bash curl jq; do command -v "$cmd" >/dev/null || { echo "Dependência não encontrada: $cmd" >&2; exit 1; }; done
 umask 077
-mkdir -p "$BASE"/{lib,prompts,config,secrets,sessions,exports,logs,state,docs} "$HOME/bin"
-chmod 700 "$BASE/secrets" "$BASE/state" "$BASE/sessions" "$BASE/exports" "$BASE/logs"
+mkdir -p "$BASE"/{lib,prompts,config,secrets,sessions,exports,imports,logs,state,docs} "$HOME/bin"
+chmod 700 "$BASE/secrets" "$BASE/state" "$BASE/sessions" "$BASE/exports" "$BASE/imports" "$BASE/logs"
 [ -f "$BASE/config/config.env" ] || cp "$BASE/config/config.env.example" "$BASE/config/config.env"
 chmod 600 "$BASE/config/config.env"
 chmod +x "$BASE/ntl"

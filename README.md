@@ -18,11 +18,13 @@ Se já tiveres uma pasta `~/ntl`, faz cópia dos dados antes de instalar ou atua
 
 ## Funções
 
-Chat rápido e sessões locais retomáveis; streaming; escolha manual de modelo, reasoning e preset; exportação Markdown; trava local de 45 pedidos/dia configurável. Esta trava não consulta os limites reais da conta nem sincroniza outros dispositivos. Os modelos gratuitos podem ficar indisponíveis ou mudar sem aviso. Não existe fallback automático.
+Chat rápido e sessões locais retomáveis; modo **Programação** (`p`) com prompt especializado para apps/código; menu **Ficheiros** (`f`) para importar ficheiros e APKs do armazenamento do Termux e exportar respostas/ficheiros para `Downloads/Nautilo`; streaming; escolha manual de modelo, reasoning e preset; trava local de 45 pedidos/dia configurável. Esta trava não consulta os limites reais da conta nem sincroniza outros dispositivos. Os modelos gratuitos podem ficar indisponíveis ou mudar sem aviso. Não existe fallback automático.
 
-## Navegação
+## Navegação e ficheiros
 
-Usa as setas ou `j`/`k` para mudar a opção e Enter para abrir; também podes usar as teclas indicadas diretamente. A tecla `a` abre a configuração da chave, `0` ou `q` sai. A interface é de terminal e não suporta toque direto nos itens. O menu adapta-se ao tamanho da janela; se o banner ficar cortado, diminui o tamanho da letra no Termux.
+Usa as setas ou `j`/`k` para mudar a opção e Enter para abrir; também podes usar as teclas indicadas diretamente. `a` abre a configuração da chave, `p` inicia o modo Programação, `f` abre Ficheiros, `0`/`q` sai. O menu é de terminal: não há toque direto nos itens.
+
+Antes de importar/exportar entre Termux e Android, executa `termux-setup-storage` e concede a permissão. Importa pelo caminho completo, por exemplo `~/storage/shared/Download/projeto.py`. O programa copia o ficheiro para `~/ntl/imports`; ficheiros de texto/código estão limitados a 64 KiB. Só o envio explícito de texto ao modelo transmite o conteúdo ao OpenRouter, e pede confirmação antes; não seleciones APK para esse envio. Exportação copia respostas, textos ou APKs para `~/storage/downloads/Nautilo`. APKs são apenas copiados: não são inspecionados, instalados ou validados. Se o nome de destino existir, é pedida confirmação para substituir.
 
 ## Segurança
 

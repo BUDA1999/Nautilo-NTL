@@ -2,6 +2,7 @@ config/config.env
 secrets/*
 sessions/*
 exports/*
+imports/*
 logs/*
 state/*
 !secrets/.gitkeep
