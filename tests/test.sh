@@ -34,7 +34,17 @@ if chat_stream '' 'erro' "$file" >/dev/null; then echo 'Erro SSE foi aceite como
 [ "$(quota_used)" = 3 ]
 QUOTA_LIMIT=3
 if chat_stream '' 'sem quota' "$file" >/dev/null; then echo 'Trava de quota falhou' >&2; exit 1; fi
-# O menu arranca e sai em Linux sem executar o shebang de Termux.
-TERM=xterm bash "$BASE/ntl" <<<'0' > "$T/menu.txt"
-grep -q 'ntl — nemotron' "$T/menu.txt"
-echo 'Testes concluídos: sintaxe, instalação, permissões, menu, sessões, exportação, SSE, erro e quota.'
+# Interface desenhada e saída limpa em terminal não interativo.
+TERM=xterm COLUMNS=44 LINES=36 bash "$BASE/ntl" <<<'0' > "$T/menu.txt"
+grep -q 'nemotron no abismo' "$T/menu.txt"
+grep -q 'reasoning' "$T/menu.txt"
+grep -q 'sessão' "$T/menu.txt"
+# Menus compact/minimal carregam e respondem também à tecla q.
+TERM=xterm COLUMNS=36 LINES=24 bash "$BASE/ntl" <<<'q' > "$T/compact.txt"
+TERM=dumb COLUMNS=28 LINES=10 bash "$BASE/ntl" <<<'q' > "$T/minimal.txt"
+grep -q '550B' "$T/minimal.txt"
+# Testa o fluxo real num pseudo-terminal, se Python estiver disponível.
+if command -v python3 >/dev/null 2>&1; then
+  python3 "$BASE/tests/test_pty.py" "$BASE"
+fi
+echo 'Testes concluídos: sintaxe, instalação, permissões, interface 3 modos, menu, sessões, exportação, SSE, erro e quota.'
