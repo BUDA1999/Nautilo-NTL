@@ -1,10 +1,12 @@
 # NÁUTILO (`ntl`)
 
+![Logótipo do NÁUTILO](assets/nautilo-logo.png)
+
 Cliente para Termux que conversa com modelos remotos através do OpenRouter. O modelo não corre no telemóvel: é necessário acesso à internet e uma chave OpenRouter.
 
 ## Instalar no Termux
 
-O repositório é privado. O Git precisa de acesso à conta GitHub autorizada; se pedir autenticação, usa um método compatível com o GitHub (não escrevas a palavra-passe da conta no terminal).
+O repositório é público e pode ser clonado sem autenticação no GitHub.
 
 ```bash
 pkg update && pkg install git -y
@@ -18,7 +20,7 @@ Se já tiveres uma pasta `~/ntl`, faz cópia dos dados antes de instalar ou atua
 
 ## Funções
 
-Chat rápido e sessões locais retomáveis; modo **Programação** (`p`) com prompt especializado para apps/código; menu **Ficheiros** (`f`) para importar ficheiros e APKs do armazenamento do Termux e exportar respostas/ficheiros para `Downloads/Nautilo`; streaming; escolha manual de modelo, reasoning e preset; trava local de 45 pedidos/dia configurável. Esta trava não consulta os limites reais da conta nem sincroniza outros dispositivos. Os modelos gratuitos podem ficar indisponíveis ou mudar sem aviso. Não existe fallback automático.
+Chat rápido e sessões locais retomáveis; modo **Programação** (`p`) com prompt especializado para apps/código; menu **Ficheiros** (`f`) para importar ficheiros e APKs do armazenamento do Termux e exportar respostas/ficheiros para `Downloads/Nautilo`; streaming; escolha manual de modelo, reasoning e preset; trava local diária desativada por defeito (`QUOTA_LIMIT=0`); o contador de pedidos continua ativo. Podes ativar uma trava definindo `QUOTA_LIMIT` acima de zero no `config/config.env`. Isso não altera os limites, custos ou disponibilidade do OpenRouter: o uso continua sujeito às regras do fornecedor e pode gerar custos se escolheres modelos pagos. Esta trava não consulta os limites reais da conta nem sincroniza outros dispositivos. Os modelos gratuitos podem ficar indisponíveis ou mudar sem aviso. Não existe fallback automático.
 
 ## Navegação e ficheiros
 
