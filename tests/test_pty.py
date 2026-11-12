@@ -24,6 +24,6 @@ for key in (b'8', b'\n', b'0'):
                 break
 _, status = os.waitpid(pid, 0)
 assert os.waitstatus_to_exitcode(status) == 0, 'menu não saiu normalmente'
-assert b'Pedidos locais usados hoje:' in data, 'atalho quota não abriu'
+assert b'Trava local: desativada.' in data, 'atalho quota não abriu'
 assert b'\x1b[?25h' in data and b'\x1b[?1049l' in data, 'terminal não restaurado'
 print('Pseudo-terminal: quota, regresso e saída verificados.')

@@ -61,6 +61,15 @@ if chat_stream '' 'erro' "$file" >/dev/null; then echo 'Erro SSE foi aceite como
 [ "$(quota_used)" = 3 ]
 QUOTA_LIMIT=3
 if chat_stream '' 'sem quota' "$file" >/dev/null; then echo 'Trava de quota falhou' >&2; exit 1; fi
+# Sem trava local: quota zero não bloqueia mesmo depois de 45 pedidos; o contador persiste.
+QUOTA_LIMIT=0; TEST_MODE=ok
+for _ in $(seq 1 45); do quota_inc; done
+[ "$(quota_used)" -gt 45 ] && [ "$(quota_left)" -gt 1000 ]
+chat_stream '' 'após 45 pedidos' "$file" >/dev/null
+[ "$(quota_used)" -gt 45 ]
+# Com QUOTA_LIMIT positivo, o bloqueio continua a funcionar.
+QUOTA_LIMIT=2
+if chat_stream '' 'limite reativado' "$file" >/dev/null; then echo 'Trava reativada falhou' >&2; exit 1; fi
 # Interface desenhada e saída limpa em terminal não interativo.
 TERM=xterm COLUMNS=44 LINES=36 bash "$BASE/ntl" <<<'0' > "$T/menu.txt"
 grep -q 'nemotron no abismo' "$T/menu.txt"
