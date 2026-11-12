@@ -22,7 +22,8 @@ printf 'fake-apk-bytes\000\377' > "$T/source/demo.apk"
 printf 'not a supported file' > "$T/source/demo.exe"
 FILE_MAX_TEXT_BYTES=64
 # Importação interactiva exercitada com entrada predefinida.
-files_import <<<"$T/source/demo.py" >/dev/null
+cp "$T/source/demo.py" "$HOME/demo.py"
+files_import <<<'~/demo.py' >/dev/null
 files_import <<<"$T/source/demo.apk" >/dev/null
 if files_import <<<"$T/source/demo.exe" >/dev/null 2>&1; then echo 'Extensão não permitida foi aceite' >&2; exit 1; fi
 imp_py=$(find "$BASE/imports" -name '*.py' -type f); imp_apk=$(find "$BASE/imports" -name '*.apk' -type f)
