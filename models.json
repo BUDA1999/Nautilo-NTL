@@ -1,0 +1,8 @@
+{
+  "primary": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "fallback": [
+    "nvidia/nemotron-3.5-lightning:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "nvidia/nemotron-3.5-super-vl:free"
+  ]
+}

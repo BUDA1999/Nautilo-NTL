@@ -1,0 +1,11 @@
+config/config.env
+secrets/*
+sessions/*
+exports/*
+logs/*
+state/*
+!secrets/.gitkeep
+!sessions/.gitkeep
+!exports/.gitkeep
+!logs/.gitkeep
+!state/.gitkeep
