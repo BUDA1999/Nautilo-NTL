@@ -49,7 +49,7 @@ files_send_text() {
   files_select_import || return 1
   path="$FILE_SELECTED"; name=${path##*/}; name=${name#*-}
   if ! text_extension_ok "$name"; then echo 'Esse ficheiro não é texto/código compatível. APKs não podem ser enviados neste modo.'; return 1; fi
-  if [ "$(wc -c < "$path")" -gt "$FILE_MAX_TEXT_BYTES" ]; then echo 'O ficheiro excede 256 KiB.'; return 1; fi
+  if [ "$(wc -c < "$path")" -gt "$FILE_MAX_TEXT_BYTES" ]; then echo 'O ficheiro excede 64 KiB.'; return 1; fi
   echo 'Atenção: o texto selecionado será enviado ao fornecedor OpenRouter. Não envies segredos ou dados confidenciais.'
   confirm 'Autorizas enviar este ficheiro ao modelo?' || { echo 'Envio cancelado.'; return 1; }
   read -rp 'O que queres que o modelo faça com este ficheiro? ' question
